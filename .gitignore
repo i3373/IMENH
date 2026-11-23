@@ -1,0 +1,5 @@
+/runs/
+/.venv/
+__pycache__/
+*.pth
+!/best_model2026.pth

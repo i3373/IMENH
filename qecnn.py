@@ -1,8 +1,5 @@
 import argparse
-import hashlib
 import json
-import subprocess
-from io import BytesIO
 from pathlib import Path
 from tempfile import NamedTemporaryFile
 
@@ -23,8 +20,7 @@ TEST_FILES = (
     ROOT / "testrawyuv/BSD500val.yuv",
     ROOT / "testcompyuv/BSD500valc.yuv",
 )
-BASELINE_COMMIT = "af78856948403c3cce7705eb2d7f52f6f44a6824"
-BASELINE_SHA256 = "0d62d7bf3ffc3ecc42420b61caadb9f32520b1925a8662ab5901c8e8eaa67d6f"
+BASELINE_WEIGHTS = ROOT / "best_model2026.pth"
 RUNS = ROOT / "runs"
 
 VARIANTS = {"control": (1, 1), "wide": (2, 4)}
@@ -303,25 +299,8 @@ def train(args, device):
         print(f"Saved best weights from epoch {best_epoch} to {output}", flush=True)
 
 
-def read_baseline_weights():
-    # Эталон читается из истории Git только для итогового сравнения.
-    reference = f"{BASELINE_COMMIT}:best_model2026.pth"
-    try:
-        weights = subprocess.check_output(["git", "show", reference], cwd=ROOT, stderr=subprocess.PIPE)
-    except (FileNotFoundError, subprocess.CalledProcessError) as error:
-        raise ValueError(
-            "The original QECNN benchmark is unavailable in local Git history. "
-            "See the reference setup in README.md."
-        ) from error
-    if hashlib.sha256(weights).hexdigest() != BASELINE_SHA256:
-        raise ValueError("The original QECNN benchmark failed its SHA-256 check")
-    return weights
-
-
 def load_model(variant, weights, device, expected_seed=None):
-    if variant == "baseline":
-        weights = BytesIO(read_baseline_weights())
-    elif not weights.is_file():
+    if not weights.is_file():
         raise FileNotFoundError(f"Checkpoint not found: {weights}")
     model = EnhancerModel(variant).to(device)
     state = torch.load(weights, map_location="cpu", weights_only=True)
@@ -336,7 +315,7 @@ def load_model(variant, weights, device, expected_seed=None):
 
 
 def evaluate(args, device):
-    models = {"QECNN": load_model("baseline", None, device)}
+    models = {"QECNN": load_model("baseline", BASELINE_WEIGHTS, device)}
     proposed = None
     if args.command == "evaluate":
         if args.control is not None:

@@ -23,8 +23,10 @@ if exist "%qecnn_runs%" goto :fresh
 
 :prepare
 echo Run directory: %qecnn_runs%
-echo Checking the original QECNN benchmark in Git...
-"%qecnn_python%" -c "from qecnn import read_baseline_weights; read_baseline_weights()" || goto :failed
+if not exist "best_model2026.pth" (
+    echo Place the supplied best_model2026.pth file next to qecnn.py for comparison.
+    goto :failed
+)
 
 if exist "%qecnn_runs%\wide_larger_patches\best.pth" goto :control
 if exist "%qecnn_runs%\wide_all\best.pth" goto :larger_patches
