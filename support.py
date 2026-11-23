@@ -21,7 +21,6 @@ def cal_psnr(img_orig, img_out):
 
 
 def yuv2rgb(y, u, v, width, height):
-    # Преобразование исходного проекта для сопоставимости с базовым PSNR.
     u = cv2.resize(u, (width, height), interpolation=cv2.INTER_CUBIC)
     v = cv2.resize(v, (width, height), interpolation=cv2.INTER_CUBIC)
     red = y + 1.4075 * (v - 128.0)
@@ -83,8 +82,6 @@ def save_psnr_plot(path, scores, means, differences=None):
 
 
 def detail_crop(images):
-    # Выбираем квадрат, где выходы базовой и новой моделей отличаются сильнее всего.
-    # На всех четырёх изображениях показываем один и тот же квадрат.
     size = 80
     difference = np.abs(images[2] - images[3]).mean(axis=2)
     tiles = difference.reshape(HEIGHT // size, size, WIDTH // size, size)

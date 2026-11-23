@@ -24,8 +24,6 @@ BASELINE_WEIGHTS = ROOT / "best_model2026.pth"
 RUNS = ROOT / "runs"
 
 VARIANTS = {"control": (1, 1), "wide": (2, 4)}
-# Радиус наибольшего поля зрения. Считаем MSE внутри фрагмента,
-# чтобы модель не училась предсказывать по искусственным границам вырезки.
 LOSS_BORDER = 16
 
 
@@ -33,7 +31,6 @@ class EnhancerModel(nn.Module):
     def __init__(self, variant="baseline"):
         super().__init__()
 
-        # Имена и размеры слоев базовой QECNN сохранены для готовых весов.
         self.conv1 = nn.Conv2d(3, 128, 9, padding=4)
         self.prelu1 = nn.PReLU(128)
         self.conv11 = nn.Conv2d(3, 128, 9, padding=4)
@@ -83,7 +80,6 @@ class EnhancerModel(nn.Module):
 
         if self.context is not None:
             feat4 = feat4 + self.context(feat4)
-        # Сеть предсказывает поправку к уже декодированному RGB.
         return image + self.conv_out(feat4)
 
 
@@ -93,7 +89,6 @@ class TrainingPatches(Dataset):
         self.patches_per_image = patches_per_image
         self.rng = np.random.default_rng(seed)
 
-        # Переводим обучающие кадры из YUV один раз и держим в памяти как float32.
         shape = (len(indices), 3, support.HEIGHT, support.WIDTH)
         self.original = np.empty(shape, dtype=np.float32)
         self.decoded = np.empty(shape, dtype=np.float32)
@@ -102,7 +97,6 @@ class TrainingPatches(Dataset):
             self.original[position] = original[index].transpose(2, 0, 1)
             self.decoded[position] = decoded[index].transpose(2, 0, 1)
             if balance_images:
-                # Примерно одинаковый вес относительной ошибки каждого кадра.
                 mse = np.mean((self.original[position] - self.decoded[position]) ** 2)
                 self.weights[position] = 1 / max(mse, 1e-3)
         self.weights /= self.weights.mean()
@@ -117,7 +111,6 @@ class TrainingPatches(Dataset):
         rows = slice(top, top + self.size)
         columns = slice(left, left + self.size)
 
-        # Одинаковые координаты в сжатом кадре и в оригинале.
         return (
             self.decoded[image, :, rows, columns],
             self.original[image, :, rows, columns],
@@ -199,8 +192,6 @@ def train(args, device):
     if len(original) < 2 and not args.all_images:
         raise ValueError("Training requires at least one training and one validation image")
     indices = np.random.default_rng(args.seed).permutation(len(original))
-    # При подборе настроек откладываем целые кадры до нарезки фрагментов.
-    # Финальное обучение использует все исходные кадры и фиксированное число эпох.
     val_count = 0 if args.all_images else max(1, len(indices) // 5)
     train_indices, val_indices = indices[val_count:], indices[:val_count]
     print(f"Training images: {len(train_indices)} | Validation images: {len(val_indices)}")
@@ -294,7 +285,6 @@ def train(args, device):
     else:
         if best_weights is None:
             raise ValueError("Training finished without a valid validation score")
-        # Батник считает этап завершённым только после записи этого файла.
         save_checkpoint(output, best_weights, args.variant, best_epoch, best_psnr, args.seed)
         print(f"Saved best weights from epoch {best_epoch} to {output}", flush=True)
 
