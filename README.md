@@ -11,7 +11,7 @@ py -3.11 -m venv .venv
 .\.venv\Scripts\python.exe -m pip install torch==2.3.1 --index-url https://download.pytorch.org/whl/cu118
 .\.venv\Scripts\python.exe -m pip install numpy==1.26.4 opencv-python==4.9.0.80 matplotlib==3.10.3
 ```
-
+К сожалению, датасеты оказались слишком большими для загрузки на github, поэтому запускать необходимо в папке с исходными датасетами.
 Батник `train_and_compare.bat` можно запустить двойным щелчком или из PowerShell.
 
 ```powershell
@@ -31,6 +31,7 @@ git fetch https://ctlab.itmo.ru/gitlab/eabelyaev/cnnimagequalityenhancement.git 
 ```
 
 Результат будет в отдельной папке `runs/repro-*/final`. Веса и результаты прогонов в `runs` исключены из Git.
+Или можно удалить папку `runs` и запустить батник еще раз
 
 ## Как собрать презентацию
 
