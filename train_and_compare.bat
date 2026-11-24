@@ -35,7 +35,7 @@ if errorlevel 1 (
     set "CUDA_VISIBLE_DEVICES=-1"
 )
 
-if exist "%qecnn_runs%\wide_larger_patches\best.pth" goto :control
+if exist "%qecnn_runs%\wide_larger_patches\best.pth" goto :compare
 if exist "%qecnn_runs%\wide_all\best.pth" goto :larger_patches
 if exist "%qecnn_runs%\wide_refined\best.pth" goto :all_images
 
@@ -55,14 +55,9 @@ echo Fine-tuning on all 200 training images...
 echo Fine-tuning on larger patches...
 "%qecnn_python%" qecnn.py train --variant wide --initialize "%qecnn_runs%\wide_all\best.pth" --all-images --epochs 6 --patch-size 96 --patches-per-image 8 --batch-size 8 --output "%qecnn_runs%\wide_larger_patches\best.pth" || goto :failed
 
-:control
-if not exist "%qecnn_runs%\control\best.pth" (
-    echo Training the control model...
-    "%qecnn_python%" qecnn.py train --variant control --output "%qecnn_runs%\control\best.pth" || goto :failed
-)
-
+:compare
 echo Comparing the improved model with the baseline...
-"%qecnn_python%" qecnn.py evaluate --improved --wide "%qecnn_runs%\wide_larger_patches\best.pth" --control "%qecnn_runs%\control\best.pth" --output-dir "%qecnn_runs%\final" || goto :failed
+"%qecnn_python%" qecnn.py evaluate --improved --wide "%qecnn_runs%\wide_larger_patches\best.pth" --output-dir "%qecnn_runs%\final" || goto :failed
 
 echo.
 echo Results saved in %qecnn_runs%\final.

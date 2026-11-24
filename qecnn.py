@@ -23,7 +23,7 @@ TEST_FILES = (
 BASELINE_WEIGHTS = ROOT / "best_model2026.pth"
 RUNS = ROOT / "runs"
 
-VARIANTS = {"control": (1, 1), "wide": (2, 4)}
+VARIANTS = {"wide": (2, 4)}
 LOSS_BORDER = 16
 
 
@@ -308,8 +308,6 @@ def evaluate(args, device):
     models = {"QECNN": load_model("baseline", BASELINE_WEIGHTS, device)}
     proposed = None
     if args.command == "evaluate":
-        if args.control is not None:
-            models["QECNN control"] = load_model("control", args.control, device)
         if args.improved:
             weights = args.wide or checkpoint_path("wide_larger_patches")
             model = load_model("wide", weights, device)
@@ -347,10 +345,6 @@ def evaluate(args, device):
         metrics["gain_over_x265_db"] = means[proposed] - means["x265"]
         metrics["meets_target"] = gain >= 0.10
         print(f"Gain over baseline: {gain:+.3f} dB | target: +0.100 dB")
-        if "QECNN control" in models:
-            control_gain = means[proposed] - means["QECNN control"]
-            metrics["gain_over_control_db"] = control_gain
-            print(f"Gain over control: {control_gain:+.3f} dB")
 
         differences = np.array(scores[proposed]) - np.array(scores["QECNN"])
         order = np.argsort(differences)
@@ -391,9 +385,8 @@ def main():
     training.add_argument("--all-images", action="store_true", help="use all training images and save the last epoch")
     training.add_argument("--output", type=Path, help="override the checkpoint path")
 
-    testing = commands.add_parser("evaluate", help="compare x265, the baseline and trained models")
+    testing = commands.add_parser("evaluate", help="compare x265, the baseline and the trained model")
     testing.add_argument("--wide", type=Path, help="override the wide model checkpoint")
-    testing.add_argument("--control", type=Path, help="optionally include the trained control model")
     testing.add_argument("--improved", action="store_true", help="use fine-tuned weights and average eight views")
     testing.add_argument("--output-dir", type=Path)
     parser.set_defaults(command="baseline")
