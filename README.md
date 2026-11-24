@@ -2,55 +2,33 @@
 
 Восстановление изображений BSD500 после сжатия x265. На 100 тестовых кадрах получили 24,840 дБ. Это на 0,103 дБ выше базовой QECNN. [Метрики](results.json) · [Презентация](output/pdf/qecnn-report.pdf)
 
-## Установка на Windows
+## Запуск на Windows
 
-Подойдёт Python 3.10, 3.11 или 3.12 для Windows x64. Команды выполняются в PowerShell из папки с `qecnn.py`. Список установленных версий показывает `py -0p`.
+Достаточно распаковать репозиторий и дважды щёлкнуть по [train_and_compare.bat](train_and_compare.bat). Для первого запуска на Windows x64 нужен интернет. Батник сам найдёт Python 3.10.0 или скачает его в папку проекта. Затем он создаст `.venv310` и установит пакеты из [requirements.txt](requirements.txt), включая PyTorch 2.4.1 с CUDA 12.1 и NumPy 1.26.4.
 
-```powershell
-py -3.10 -m venv .venv
-```
+Сборка PyTorch занимает около 2,5 ГБ при скачивании. При следующих запусках уже установленные пакеты используются повторно.
 
-Для Python 3.11 или 3.12 в этой команде нужно указать `-3.11` или `-3.12`. Если `py` недоступен, но `python --version` показывает подходящую версию, можно выполнить `python -m venv .venv`.
+Обучение начинается автоматически. Исходные и сжатые YUV и базовые веса `best_model2026.pth` уже лежат в репозитории. На совместимой видеокарте NVIDIA обучение идёт быстрее, на процессоре тоже запускается.
 
-Если PowerShell не находит установленный Python, можно указать путь к `python.exe`, например `& "$env:LOCALAPPDATA\Programs\Python\Python310\python.exe" -m venv .venv`. После установки Python нужно открыть новое окно PowerShell. [Установка Python в Windows](https://docs.python.org/3/using/windows.html)
+Итоговые `metrics.json`, `psnr.png` и `examples.png` сохраняются в `runs/final`. При повторном запуске батник использует уже пройденные этапы, если их веса есть в `runs`.
 
-Достаточно установить одну сборку PyTorch. Для NVIDIA используется сборка с CUDA 11.8.
-
-```powershell
-.\.venv\Scripts\python.exe -m pip install torch==2.3.1 --index-url https://download.pytorch.org/whl/cu118
-```
-
-Для запуска на процессоре используется сборка PyTorch для CPU.
-
-```powershell
-.\.venv\Scripts\python.exe -m pip install torch==2.3.1 --index-url https://download.pytorch.org/whl/cpu
-```
-
-Остальные зависимости одинаковы для обеих сборок.
-
-```powershell
-.\.venv\Scripts\python.exe -m pip install numpy==1.26.4 opencv-python==4.9.0.80 matplotlib==3.10.3
-```
-
-## Проверка запуска
-
-В репозитории уже есть исходные YUV, декодированные x265 YUV и базовые веса `best_model2026.pth` из задания. Для проверки достаточно запустить сравнение на 100 тестовых изображениях.
-
-```powershell
-.\.venv\Scripts\python.exe qecnn.py baseline
-```
-
-Средний PSNR будет около 24,517 дБ для x265 и 24,738 дБ для базовой QECNN. Метрики и график сохраняются в `runs/baseline`.
-
-## Обучение с нуля
-
-Батник сам использует Python из `.venv`. Для полного обучения желательно использовать видеокарту NVIDIA.
+Чтобы заново обучить модели в отдельной папке, можно запустить батник из PowerShell с флагом `--fresh`.
 
 ```powershell
 .\train_and_compare.bat --fresh
 ```
 
-Флаг `--fresh` создаёт отдельную папку запуска. В `runs/repro-*/final` сохраняются `metrics.json`, `psnr.png` и `examples.png`. При запуске без флага батник использует уже пройденные этапы из `runs`, если они есть, и сохраняет итог в `runs/final`.
+Итог этого запуска будет в `runs/repro-*/final`.
+
+## Проверка базовой модели
+
+После создания `.venv310` можно отдельно посчитать PSNR на 100 тестовых изображениях.
+
+```powershell
+.\.venv310\Scripts\python.exe qecnn.py baseline
+```
+
+Ожидаемые средние значения — 24,517 дБ для x265 и 24,738 дБ для базовой QECNN. Метрики и график сохраняются в `runs/baseline`.
 
 ## Как собрать презентацию
 
